@@ -12,6 +12,7 @@
 
 import argparse
 import getopt
+import ipaddress
 import re
 import requests
 import signal
@@ -46,12 +47,16 @@ def main(argv):
 
     logo()
 
+    try:
+        ip = str(ipaddress.ip_address(ip))
+    except ValueError:
+        print(colored('ERROR!', 'red', attrs=['reverse', 'bold']) + ' IP address is not valid.')
+        sys.exit(1)
+
     print('[+] IP: ' + colored(ip, 'white', attrs=['bold']))
 
     url = 'https://securitytrails.com/list/ip/' + ip
-    timeout = 10
 
-#    r = requests.get(url, headers={'User-Agent': ua}, verify=False, timeout=(timeout, timeout))
     r = requests.get(url, headers={'User-Agent': ua}, verify=False)
     fqdns = re.findall('dns\"\>(.*?)\<\/a\>', r.text)
     count = len(fqdns)
