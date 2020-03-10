@@ -54,7 +54,6 @@ def main(argv):
     ip = args.ip
     subnet = args.subnet
     file = args.file
-    print(ip)
     ua = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
 
     logo()
@@ -69,7 +68,7 @@ def main(argv):
 
     url = 'https://securitytrails.com/list/ip/' + ip
 
-    r = requests.get(url, headers={'User-Agent': ua}, verify=False)
+    r = requests.get(url, headers={'User-Agent': ua}, verify = False)
     fqdns = re.findall('dns\"\>(.*?)\<\/a\>', r.text)
     count = len(fqdns)
 
