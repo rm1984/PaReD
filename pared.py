@@ -10,6 +10,12 @@
 # Coded by: Riccardo Mollo (riccardomollo84@gmail.com)
 #
 
+#### TODO:
+#### - output file
+#### - input file with many ip addresses
+#### - subnet instead of single ip
+#### - add http://ptrarchive.com/tools/lookup2.htm?ip=8.8.8.8
+
 import argparse
 import getopt
 import ipaddress
@@ -39,10 +45,14 @@ def logo():
     print()
 
 def main(argv):
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-i', '--ip', help = 'The IP address', required = True)
+    parser = argparse.ArgumentParser(prog = 'pared.py')
+    parser.add_argument('-i', '--ip', help = 'single IP address', required = True)
+    parser.add_argument('-s', '--subnet', help = 'subnet in CIDR notation', required = False)
+    parser.add_argument('-f', '--file', help = 'file containing a list of IP addresses', required = False)
     args = parser.parse_args()
     ip = args.ip
+    subnet = args.subnet
+    file = args.file
     ua = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
 
     logo()
@@ -73,7 +83,3 @@ def main(argv):
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
     main(sys.argv[1:])
-
-#### TODO:
-#### - output file
-#### - add http://ptrarchive.com/tools/lookup2.htm?ip=8.8.8.8
