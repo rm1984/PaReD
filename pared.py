@@ -46,13 +46,15 @@ def logo():
 
 def main(argv):
     parser = argparse.ArgumentParser(prog = 'pared.py')
-    parser.add_argument('-i', '--ip', help = 'single IP address', required = True)
-    parser.add_argument('-s', '--subnet', help = 'subnet in CIDR notation', required = False)
-    parser.add_argument('-f', '--file', help = 'file containing a list of IP addresses', required = False)
+    group = parser.add_mutually_exclusive_group(required = True)
+    group.add_argument('-i', '--ip', help = 'single IP address')
+    group.add_argument('-s', '--subnet', help = 'subnet in CIDR notation')
+    group.add_argument('-f', '--file', help = 'file containing a list of IP addresses')
     args = parser.parse_args()
     ip = args.ip
     subnet = args.subnet
     file = args.file
+    print(ip)
     ua = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
 
     logo()
