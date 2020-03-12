@@ -12,7 +12,6 @@
 
 #### TODO:
 #### - save out to output file
-#### - subnet instead of single ip
 #### - add http://ptrarchive.com/tools/lookup2.htm?ip=8.8.8.8
 #### - add https://api.hackertarget.com/reverseiplookup/?q=8.8.8.8
 
@@ -24,6 +23,7 @@ import requests
 import signal
 import sys
 import urllib3
+from ipaddress import IPv4Network
 from termcolor import colored
 
 requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS = 'ALL'
@@ -87,7 +87,13 @@ def main(argv):
     if ip is not None:
         print_domains(ip)
     elif subnet is not None:
-        print("TODO")
+        try:
+            for ip in IPv4Network(subnet):
+                print_domains(ip)
+        except ipaddress.AddressValueError:
+            print(colored('ERROR!', 'red', attrs = ['reverse', 'bold']) + ' Invalid subnet.')
+        except ipaddress.NetmaskValueError:
+            print(colored('ERROR!', 'red', attrs = ['reverse', 'bold']) + ' Invalid subnet.')
     elif file is not None:
         with open(file) as reader:
             for line in reader:
