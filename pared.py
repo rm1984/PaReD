@@ -11,7 +11,6 @@
 #
 
 #### TODO:
-#### - save out to output file
 #### - add http://ptrarchive.com/tools/lookup2.htm?ip=8.8.8.8
 #### - add https://api.hackertarget.com/reverseiplookup/?q=8.8.8.8
 
@@ -44,7 +43,7 @@ def logo():
     print(colored('Coded by: Riccardo Mollo', 'cyan'))
     print()
 
-def print_domains(ip):
+def print_domains(ip, output = None):
     try:
         ip = str(ipaddress.ip_address(ip))
     except ValueError:
@@ -64,8 +63,19 @@ def print_domains(ip):
         n = colored(str(count), 'green')
         print('[+] Found ' + n + ' domains:')
 
+        if output is not None:
+            f_output = open(output, 'a')
+
+        fqdns.sort()
+
         for fqdn in fqdns:
             print(colored(fqdn, 'green'))
+
+            if output is not None:
+                print(fqdn, file = f_output)
+
+        if output is not None:
+            f_output.close()
     else:
         print('[+] No domains found for IP ' + colored(ip, 'white', attrs = ['bold']) + ', sorry.')
 
@@ -77,19 +87,21 @@ def main(argv):
     group.add_argument('-i', '--ip', help = 'single IP address')
     group.add_argument('-s', '--subnet', help = 'subnet in CIDR notation')
     group.add_argument('-f', '--file', help = 'file containing a list of IP addresses')
+    parser.add_argument('-o', '--output', help = 'save output to file')
     args = parser.parse_args()
     ip = args.ip
     subnet = args.subnet
     file = args.file
+    output = args.output
 
     logo()
 
     if ip is not None:
-        print_domains(ip)
+        print_domains(ip, output)
     elif subnet is not None:
         try:
             for ip in IPv4Network(subnet):
-                print_domains(ip)
+                print_domains(ip, output)
         except ipaddress.AddressValueError:
             print(colored('ERROR!', 'red', attrs = ['reverse', 'bold']) + ' Invalid subnet.')
         except ipaddress.NetmaskValueError:
@@ -97,7 +109,7 @@ def main(argv):
     elif file is not None:
         with open(file) as reader:
             for line in reader:
-                print_domains(line.strip())
+                print_domains(line.strip(), output)
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
