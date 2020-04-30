@@ -11,6 +11,7 @@
 #
 
 #### TODO:
+#### - rewrite parser for SecurityTrails (*** NOT WORKING ANYMORE AT THE MOMENT ***)
 #### - add http://ptrarchive.com/tools/lookup2.htm?ip=8.8.8.8
 #### - add https://api.hackertarget.com/reverseiplookup/?q=8.8.8.8
 
