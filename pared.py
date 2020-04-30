@@ -53,6 +53,7 @@ def print_domains(ip, output = None):
     print('[+] IP: ' + colored(ip, 'white', attrs = ['bold']))
 
     url = 'https://securitytrails.com/list/ip/' + ip
+#    url = 'https://api.hackertarget.com/reverseiplookup/?q=' + ip
     ua = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
 
     r = requests.get(url, headers = {'User-Agent': ua}, verify = False)
