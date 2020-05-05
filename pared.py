@@ -5,15 +5,15 @@
 # --------
 # A simple Python script that tries to determine one or more FQDNs of a given IP
 # address using passive reverse DNS lookups.
-# At the moment it gets data from SecurityTrails (https://securitytrails.com/).
+# At the moment it retrieves data from HackerTarget's API
+# (https://hackertarget.com/), since SecurityTrails massively changed its
+# front-end query page and getting results is now a pain in the @$$.
 #
 # Coded by: Riccardo Mollo (riccardomollo84@gmail.com)
 #
 
 #### TODO:
-#### - rewrite parser for SecurityTrails (*** NOT WORKING ANYMORE AT THE MOMENT ***)
-#### - add http://ptrarchive.com/tools/lookup2.htm?ip=8.8.8.8
-#### - add https://api.hackertarget.com/reverseiplookup/?q=8.8.8.8
+#### - ...
 
 import argparse
 import getopt
@@ -53,12 +53,21 @@ def print_domains(ip, output = None):
 
     print('[+] IP: ' + colored(ip, 'white', attrs = ['bold']))
 
-    url = 'https://securitytrails.com/list/ip/' + ip
-#    url = 'https://api.hackertarget.com/reverseiplookup/?q=' + ip
+#    url = 'https://securitytrails.com/list/ip/' + ip
+    url = 'https://api.hackertarget.com/reverseiplookup/?q=' + ip
     ua = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
 
     r = requests.get(url, headers = {'User-Agent': ua}, verify = False)
-    fqdns = re.findall('dns\"\>(.*?)\<\/a\>', r.text)
+
+    if r.status_code != 200:
+        print(colored('ERROR!', 'red', attrs = ['reverse', 'bold']) + ' Server responded with HTTP code ' + str(r.status_code) + '.')
+        sys.exit(1)
+
+    if 'API count exceeded' in r.text:
+        print(colored('ERROR!', 'red', attrs = ['reverse', 'bold']) + ' API count exceeded.')
+        sys.exit(1)
+
+    fqdns = r.text.splitlines()
     count = len(fqdns)
 
     if count > 0:
