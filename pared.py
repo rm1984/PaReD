@@ -13,11 +13,14 @@
 #
 
 #### TODO:
-#### - ...
+#### - consider only recent domains from mnemonic ("lastSeenTimestamp")
+#### - let the user be able to choose the info provider
+#### - random user agent
 
 import argparse
 import getopt
 import ipaddress
+import json
 import re
 import requests
 import signal
@@ -44,20 +47,11 @@ def logo():
     print(colored('Coded by: Riccardo Mollo', 'cyan'))
     print()
 
-def print_domains(ip, output = None):
-    try:
-        ip = str(ipaddress.ip_address(ip))
-    except ValueError:
-        print(colored('ERROR!', 'red', attrs = ['reverse', 'bold']) + ' IP address is not valid.')
-        sys.exit(1)
-
-    print('[+] IP: ' + colored(ip, 'white', attrs = ['bold']))
-
-#    url = 'https://securitytrails.com/list/ip/' + ip
+# HackerTarget
+def from_hackertarget(ip, ua):
     url = 'https://api.hackertarget.com/reverseiplookup/?q=' + ip
-    ua = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
 
-    r = requests.get(url, headers = {'User-Agent': ua}, verify = False)
+    r = requests.get(url, headers = {'User-Agent' : ua}, verify = False)
 
     if r.status_code != 200:
         print(colored('ERROR!', 'red', attrs = ['reverse', 'bold']) + ' Server responded with HTTP code ' + str(r.status_code) + '.')
@@ -67,7 +61,67 @@ def print_domains(ip, output = None):
         print(colored('ERROR!', 'red', attrs = ['reverse', 'bold']) + ' API count exceeded.')
         sys.exit(1)
 
-    fqdns = r.text.splitlines()
+    return r.text.splitlines()
+
+# Argus Managed Defence | mnemonic
+def from_mnemonic(ip, ua):
+    url = 'https://api.mnemonic.no/pdns/v3/search'
+
+    headers = {
+        "Host" : "api.mnemonic.no",
+        "User-Agent" : ua,
+        "Accept" : "application/json",
+        "Accept-Language" : "en-US,en;q=0.5",
+        "Accept-Encoding" : "gzip, deflate",
+        "Referer" : "https://passivedns.mnemonic.no/",
+        "Content-Type" : "application/json",
+        "Origin" : "https://passivedns.mnemonic.no",
+        "Connection" : "close",
+        "Content-Length" : "190",
+    }
+
+    payload = {
+        "query": ip,
+        "aggregateResult": "true",
+        "includeAnonymousResults": "true",
+        "rrClass": [],
+        "rrType": [],
+        "customerID": [],
+        "tlp": [],
+        "offset": 0,
+        "limit": 25
+    }
+
+    r = requests.post(url, data = json.dumps(payload), headers = headers, verify = False)
+    r_json = r.json()
+
+    response_code = r_json['responseCode']
+
+    if r.status_code != 200 or int(response_code) != 200:
+        print(colored('ERROR!', 'red', attrs = ['reverse', 'bold']) + ' Server responded with HTTP code ' + str(r.status_code) + '.')
+        sys.exit(1)
+
+    fqdns = []
+
+    for data in r_json['data']:
+        #print(data['query'])
+        fqdns.append(data['query'])
+
+    return fqdns
+
+def print_domains(ip, output = None):
+    try:
+        ip = str(ipaddress.ip_address(ip))
+    except ValueError:
+        print(colored('ERROR!', 'red', attrs = ['reverse', 'bold']) + ' IP address is not valid.')
+        sys.exit(1)
+
+    print('[+] IP: ' + colored(ip, 'white', attrs = ['bold']))
+
+    ua = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+
+    fqdns = from_hackertarget(ip, ua)
+    #fqdns = from_mnemonic(ip, ua)
     count = len(fqdns)
 
     if count > 0:
