@@ -16,7 +16,6 @@
 #### TODO:
 #### - consider only recent domains from mnemonic ("lastSeenTimestamp")
 #### - let the user be able to choose the info provider
-#### - random user agent
 #### - possibly merge results from all providers
 
 import argparse
@@ -30,7 +29,9 @@ import sys
 import urllib3
 from datetime import timezone, datetime
 from dateutil.relativedelta import relativedelta
+from fake_useragent import UserAgent
 from ipaddress import IPv4Network
+from pathlib import Path
 from termcolor import colored
 
 requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS = 'ALL'
@@ -75,28 +76,28 @@ def from_mnemonic(ip, ua):
     url = 'https://api.mnemonic.no/pdns/v3/search'
 
     headers = {
-        "Host" : "api.mnemonic.no",
-        "User-Agent" : ua,
-        "Accept" : "application/json",
-        "Accept-Language" : "en-US,en;q=0.5",
-        "Accept-Encoding" : "gzip, deflate",
-        "Referer" : "https://passivedns.mnemonic.no/",
-        "Content-Type" : "application/json",
-        "Origin" : "https://passivedns.mnemonic.no",
-        "Connection" : "close",
-        "Content-Length" : "190",
+        'Host' : 'api.mnemonic.no',
+        'User-Agent' : ua,
+        'Accept' : 'application/json',
+        'Accept-Language' : 'en-US,en;q=0.5',
+        'Accept-Encoding' : 'gzip, deflate',
+        'Referer' : 'https://passivedns.mnemonic.no/',
+        'Content-Type' : 'application/json',
+        'Origin' : 'https://passivedns.mnemonic.no',
+        'Connection' : 'close',
+        'Content-Length' : '190'
     }
 
     payload = {
-        "query": ip,
-        "aggregateResult": "true",
-        "includeAnonymousResults": "true",
-        "rrClass": [],
-        "rrType": [],
-        "customerID": [],
-        "tlp": [],
-        "offset": 0,
-        "limit": 25
+        'query': ip,
+        'aggregateResult': 'true',
+        'includeAnonymousResults': 'true',
+        'rrClass': [],
+        'rrType': [],
+        'customerID': [],
+        'tlp': [],
+        'offset': 0,
+        'limit': 25
     }
 
     r = requests.post(url, data = json.dumps(payload), headers = headers, verify = False)
@@ -119,7 +120,7 @@ def from_mnemonic(ip, ua):
 
     return fqdns
 
-def print_domains(ip, output = None):
+def print_domains(ip, ua, output = None):
     try:
         ip = str(ipaddress.ip_address(ip))
     except ValueError:
@@ -127,8 +128,6 @@ def print_domains(ip, output = None):
         sys.exit(1)
 
     print('[+] IP: ' + colored(ip, 'white', attrs = ['bold']))
-
-    ua = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
 
     fqdns = from_hackertarget(ip, ua)
     #fqdns = from_mnemonic(ip, ua)
@@ -163,20 +162,27 @@ def main(argv):
     group.add_argument('-s', '--subnet', help = 'subnet in CIDR notation')
     group.add_argument('-f', '--file', help = 'file containing a list of IP addresses')
     parser.add_argument('-o', '--output', help = 'save output to file')
+    parser.add_argument('-r', '--rua', action='store_true', help = 'random user agent') 
     args = parser.parse_args()
     ip = args.ip
     subnet = args.subnet
     file = args.file
     output = args.output
 
+    if args.rua:
+        browsers_file = str(Path(__file__).resolve().parent) + '/browsers.json'
+        ua = UserAgent(path = browsers_file, cache = False, use_cache_server = False).random
+    else:
+        ua = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
+
     logo()
 
     if ip is not None:
-        print_domains(ip, output)
+        print_domains(ip, ua, output)
     elif subnet is not None:
         try:
             for ip in IPv4Network(subnet):
-                print_domains(ip, output)
+                print_domains(ip, ua, output)
         except ipaddress.AddressValueError:
             error('Invalid subnet.')
         except ipaddress.NetmaskValueError:
@@ -184,7 +190,7 @@ def main(argv):
     elif file is not None:
         with open(file) as reader:
             for line in reader:
-                print_domains(line.strip(), output)
+                print_domains(line.strip(), ua, output)
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
