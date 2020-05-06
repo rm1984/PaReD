@@ -5,8 +5,9 @@
 # --------
 # A simple Python script that tries to determine one or more FQDNs of a given IP
 # address using passive reverse DNS lookups.
-# At the moment it retrieves data from HackerTarget's API
-# (https://hackertarget.com/), since SecurityTrails massively changed its
+# At the moment it can retrieve data from HackerTarget's API
+# (https://hackertarget.com/) and from Mnemonic by Argus Managed Defence
+# (https://passivedns.mnemonic.no/), since SecurityTrails massively changed its
 # front-end query page and getting results is now a pain in the @$$.
 #
 # Coded by: Riccardo Mollo (riccardomollo84@gmail.com)
@@ -16,6 +17,7 @@
 #### - consider only recent domains from mnemonic ("lastSeenTimestamp")
 #### - let the user be able to choose the info provider
 #### - random user agent
+#### - possibly merge results from all providers
 
 import argparse
 import getopt
@@ -26,6 +28,8 @@ import requests
 import signal
 import sys
 import urllib3
+from datetime import timezone, datetime
+from dateutil.relativedelta import relativedelta
 from ipaddress import IPv4Network
 from termcolor import colored
 
@@ -47,6 +51,9 @@ def logo():
     print(colored('Coded by: Riccardo Mollo', 'cyan'))
     print()
 
+def error(message):
+    print(colored('ERROR!', 'red', attrs = ['reverse', 'bold']) + ' ' + message)
+
 # HackerTarget
 def from_hackertarget(ip, ua):
     url = 'https://api.hackertarget.com/reverseiplookup/?q=' + ip
@@ -54,11 +61,11 @@ def from_hackertarget(ip, ua):
     r = requests.get(url, headers = {'User-Agent' : ua}, verify = False)
 
     if r.status_code != 200:
-        print(colored('ERROR!', 'red', attrs = ['reverse', 'bold']) + ' Server responded with HTTP code ' + str(r.status_code) + '.')
+        error('Server responded with HTTP code ' + str(r.status_code) + '.')
         sys.exit(1)
 
     if 'API count exceeded' in r.text:
-        print(colored('ERROR!', 'red', attrs = ['reverse', 'bold']) + ' API count exceeded.')
+        error('API count exceeded.')
         sys.exit(1)
 
     return r.text.splitlines()
@@ -98,10 +105,13 @@ def from_mnemonic(ip, ua):
     response_code = r_json['responseCode']
 
     if r.status_code != 200 or int(response_code) != 200:
-        print(colored('ERROR!', 'red', attrs = ['reverse', 'bold']) + ' Server responded with HTTP code ' + str(r.status_code) + '.')
+        error('Server responded with HTTP code ' + str(r.status_code) + '.')
         sys.exit(1)
 
     fqdns = []
+
+    #### new_date = old_date + relativedelta(years = 1)
+    #### int(datetime.now(tz = timezone.utc).timestamp() * 1000)
 
     for data in r_json['data']:
         #print(data['query'])
@@ -113,7 +123,7 @@ def print_domains(ip, output = None):
     try:
         ip = str(ipaddress.ip_address(ip))
     except ValueError:
-        print(colored('ERROR!', 'red', attrs = ['reverse', 'bold']) + ' IP address is not valid.')
+        error('IP address is not valid.')
         sys.exit(1)
 
     print('[+] IP: ' + colored(ip, 'white', attrs = ['bold']))
@@ -168,9 +178,9 @@ def main(argv):
             for ip in IPv4Network(subnet):
                 print_domains(ip, output)
         except ipaddress.AddressValueError:
-            print(colored('ERROR!', 'red', attrs = ['reverse', 'bold']) + ' Invalid subnet.')
+            error('Invalid subnet.')
         except ipaddress.NetmaskValueError:
-            print(colored('ERROR!', 'red', attrs = ['reverse', 'bold']) + ' Invalid subnet.')
+            error('Invalid subnet.')
     elif file is not None:
         with open(file) as reader:
             for line in reader:
