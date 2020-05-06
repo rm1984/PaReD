@@ -4,7 +4,7 @@
 
 **Usage:**
 ```
-usage: pared.py [-h] (-i IP | -s SUBNET | -f FILE) [-o OUTPUT]
+usage: pared.py [-h] (-i IP | -s SUBNET | -f FILE) [-o OUTPUT] [-r] [--source {hackertarget,mnemonic}]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -14,4 +14,7 @@ optional arguments:
   -f FILE, --file FILE  file containing a list of IP addresses
   -o OUTPUT, --output OUTPUT
                         save output to file
+  -r, --rua             random user agent
+  --source {hackertarget,mnemonic}
+                        source of passive dns data ("hackertarget" is the default)
 ```
