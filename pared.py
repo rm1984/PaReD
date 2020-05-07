@@ -28,6 +28,7 @@ import signal
 import sys
 import time
 import urllib3
+from dns import reversename, resolver
 from ipaddress import IPv4Network
 from pathlib import Path
 from termcolor import colored
@@ -67,7 +68,12 @@ def from_hackertarget(ip, ua):
         error('API count exceeded.')
         sys.exit(1)
 
-    return r.text.splitlines()
+    fqdns = []
+
+    if 'No DNS A records found' not in r.text:
+        fqdns = r.text.splitlines()
+
+    return fqdns
 
 # Argus Managed Defence | mnemonic
 def from_mnemonic(ip, ua):
@@ -132,8 +138,11 @@ def print_domains(ip, source, ua, output = None):
         error('IP address is not valid.')
         sys.exit(1)
 
-    print('[+] IP: ' + colored(ip, 'white', attrs = ['bold']))
-    print('[+] Source: ' + colored(source, 'yellow', attrs = ['bold']))
+    rv = str(resolver.query(reversename.from_address(ip), 'PTR')[0])[:-1]
+
+    print('[+] IP:         ' + colored(ip, 'white', attrs = ['bold']))
+    print('[+] Rev. DNS:   ' + colored(rv, 'white', attrs = ['bold']))
+    print('[+] Source:     ' + colored(source, 'yellow', attrs = ['bold']))
     print('[+] User Agent: ' + colored(ua, 'white', attrs = ['bold']))
 
     fqdns = globals()['from_' + source](ip, ua)
