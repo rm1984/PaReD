@@ -14,10 +14,11 @@
 #
 
 #### TODO:
-#### - consider only recent domains from mnemonic ("lastSeenTimestamp")
+#### - find best value for "diff_ts"
 #### - possibly merge results from all providers
 
 import argparse
+import calendar
 import getopt
 import ipaddress
 import json
@@ -25,9 +26,8 @@ import random
 import requests
 import signal
 import sys
+import time
 import urllib3
-from datetime import timezone, datetime
-from dateutil.relativedelta import relativedelta
 from ipaddress import IPv4Network
 from pathlib import Path
 from termcolor import colored
@@ -109,12 +109,13 @@ def from_mnemonic(ip, ua):
 
     fqdns = []
 
-    #### new_date = old_date + relativedelta(years = 1)
-    #### int(datetime.now(tz = timezone.utc).timestamp() * 1000)
-
     for data in r_json['data']:
-        #print(data['query'])
-        fqdns.append(data['query'])
+        last_ts = int(str(data['lastSeenTimestamp'])[:10])
+        curr_ts = calendar.timegm(time.gmtime())
+        diff_ts = 13891768
+
+        if (curr_ts - last_ts) < diff_ts:
+            fqdns.append(data['query'])
 
     return fqdns
 
@@ -132,7 +133,7 @@ def print_domains(ip, source, ua, output = None):
         sys.exit(1)
 
     print('[+] IP: ' + colored(ip, 'white', attrs = ['bold']))
-    print('[+] Source: ' + colored(source, 'white', attrs = ['bold']))
+    print('[+] Source: ' + colored(source, 'yellow', attrs = ['bold']))
     print('[+] User Agent: ' + colored(ua, 'white', attrs = ['bold']))
 
     fqdns = globals()['from_' + source](ip, ua)
