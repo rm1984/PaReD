@@ -14,7 +14,6 @@
 #
 
 #### TODO:
-#### - find best value for "diff_ts"
 #### - possibly merge results from all providers
 
 import argparse
@@ -118,18 +117,27 @@ def from_mnemonic(ip, ua):
     for data in r_json['data']:
         last_ts = int(str(data['lastSeenTimestamp'])[:10])
         curr_ts = calendar.timegm(time.gmtime())
-        diff_ts = 13891768
+        diff_ts = 31536000 # exactly one year
 
         if (curr_ts - last_ts) < diff_ts:
             fqdns.append(data['query'])
 
     return fqdns
 
-def random_rua():
-    f_rua = str(Path(__file__).resolve().parent) + '/browsers.txt'
-    lines = open(f_rua).read().splitlines()
+def get_useragent(rnd):
+    # default User Agent
+    ua = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
 
-    return random.choice(lines)
+    if rnd:
+        try:
+            f_rua = str(Path(__file__).resolve().parent) + '/browsers.txt'
+            lines = open(f_rua).read().splitlines()
+
+            return random.choice(lines)
+        except FileNotFoundError:
+            return ua
+    else:
+        return ua
 
 def print_domains(ip, source, ua, output = None):
     try:
@@ -138,7 +146,14 @@ def print_domains(ip, source, ua, output = None):
         error('IP address is not valid.')
         sys.exit(1)
 
-    rv = str(resolver.query(reversename.from_address(ip), 'PTR')[0])[:-1]
+    try:
+        rv = str(resolver.query(reversename.from_address(ip), 'PTR')[0])[:-1]
+    except resolver.NXDOMAIN:
+        rv = "- none -"
+    except resolver.NoAnswer:
+        rv = "- no answer -"
+    except resolver.Timeout:
+        rv = "- timeout -"
 
     print('[+] IP:         ' + colored(ip, 'white', attrs = ['bold']))
     print('[+] Rev. DNS:   ' + colored(rv, 'white', attrs = ['bold']))
@@ -178,22 +193,15 @@ def main(argv):
     group.add_argument('-f', '--file', help = 'file containing a list of IP addresses')
     parser.add_argument('-o', '--output', help = 'save output to file')
     parser.add_argument('-r', '--rua', action='store_true', help = 'random user agent')
-    parser.add_argument('--source', choices = ['hackertarget', 'mnemonic'], help = 'source of data ("hackertarget" is the default)')
-
+    parser.add_argument('--source', choices = ['hackertarget', 'mnemonic'], default = 'hackertarget', help = 'source of data ("hackertarget" is the default)')
     args = parser.parse_args()
+
     ip = args.ip
     subnet = args.subnet
     file = args.file
     output = args.output
+    ua = get_useragent(args.rua)
     source = args.source
-
-    if args.rua:
-        ua = random_rua()
-    else:
-        ua = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'
-
-    if source is None:
-        source = 'hackertarget'
 
     logo()
 
