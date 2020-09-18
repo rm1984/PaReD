@@ -147,12 +147,15 @@ def print_domains(ip, source, ua, output = None):
         sys.exit(1)
 
     try:
-        rv = str(resolver.query(reversename.from_address(ip), 'PTR')[0])[:-1]
+        result = resolver.resolve(reversename.from_address(ip), 'PTR', raise_on_no_answer=False)
+        rv = result[0]
     except resolver.NXDOMAIN:
         rv = "- none -"
+    except resolver.NoNameservers:
+        rv = "- answer refused -"
     except resolver.NoAnswer:
         rv = "- no answer -"
-    except resolver.Timeout:
+    except exception.Timeout:
         rv = "- timeout -"
 
     print('[+] IP:         ' + colored(ip, 'white', attrs = ['bold']))
