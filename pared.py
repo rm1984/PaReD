@@ -155,7 +155,7 @@ def print_domains(ip, source, ua, output = None):
         rv = "- answer refused -"
     except resolver.NoAnswer:
         rv = "- no answer -"
-    except exception.Timeout:
+    except resolver.Timeout:
         rv = "- timeout -"
 
     print('[+] IP:         ' + colored(ip, 'white', attrs = ['bold']))
