@@ -147,7 +147,7 @@ def print_domains(ip, source, ua, output = None):
         sys.exit(1)
 
     try:
-        result = resolver.resolve(reversename.from_address(ip), 'PTR', raise_on_no_answer=False)
+        result = resolver.resolve(reversename.from_address(ip), 'PTR', raise_on_no_answer = False)
         rv = result[0]
     except resolver.NXDOMAIN:
         rv = "- none -"
