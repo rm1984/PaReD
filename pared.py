@@ -18,23 +18,21 @@
 
 import argparse
 import calendar
-import getopt
 import ipaddress
 import json
 import random
-import requests
 import signal
 import sys
 import time
-import urllib3
-from dns import reversename, resolver
-from ipaddress import IPv4Network
 from pathlib import Path
+from ipaddress import IPv4Network
+from dns import reversename, resolver
 from termcolor import colored
+import requests
 
+requests.urllib3.disable_warnings()
 requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS = 'ALL'
 requests.packages.urllib3.contrib.pyopenssl.extract_from_urllib3()
-urllib3.disable_warnings()
 
 def signal_handler(s, frame):
     if s == 2: # SIGINT
@@ -190,7 +188,7 @@ def print_domains(ip, source, ua, output = None):
 
     print()
 
-def main(argv):
+def main():
     parser = argparse.ArgumentParser(prog = 'pared.py')
     group = parser.add_mutually_exclusive_group(required = True)
     group.add_argument('-i', '--ip', help = 'single IP address')
@@ -227,4 +225,5 @@ def main(argv):
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
-    main(sys.argv[1:])
+    main()
+
