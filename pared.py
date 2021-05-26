@@ -145,7 +145,7 @@ def print_domains(ip, source, ua, output = None):
         sys.exit(1)
 
     try:
-        result = resolver.resolve(reversename.from_address(ip), 'PTR', raise_on_no_answer = False)
+        result = resolver.query(reversename.from_address(ip), 'ptr')
         rv = result[0]
     except resolver.NXDOMAIN:
         rv = "- none -"
@@ -226,4 +226,3 @@ def main():
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
     main()
-
