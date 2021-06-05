@@ -128,7 +128,7 @@ def get_useragent(rnd):
 
     if rnd:
         try:
-            f_rua = str(Path(__file__).resolve().parent) + '/browsers.txt'
+            f_rua = str(Path(__file__).resolve().parent) + '/user-agents.txt'
             lines = open(f_rua).read().splitlines()
 
             return random.choice(lines)
