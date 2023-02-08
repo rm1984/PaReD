@@ -26,9 +26,10 @@ import socket
 import sys
 import time
 from pathlib import Path
-from dns import reversename, resolver
+from dns import resolver
 from termcolor import colored
 import requests
+import urllib3.contrib.pyopenssl
 
 requests.urllib3.disable_warnings()
 requests.packages.urllib3.util.ssl_.DEFAULT_CIPHERS = "ALL"
@@ -59,7 +60,7 @@ def error(message):
 def from_hackertarget(ip, ua):
     url = "https://api.hackertarget.com/reverseiplookup/?q=" + ip
 
-    r = requests.get(url, headers = {"User-Agent": ua}, verify = False)
+    r = requests.get(url, headers = {"User-Agent": ua}, verify = False, timeout = 30)
 
     if r.status_code != 200:
         error("Server responded with HTTP code " + str(r.status_code) + ".")
@@ -106,7 +107,7 @@ def from_mnemonic(ip, ua):
         "limit": 25,
     }
 
-    r = requests.post(url, data = json.dumps(payload), headers = headers, verify = False)
+    r = requests.post(url, data = json.dumps(payload), headers = headers, verify = False, timeout = 30)
     r_json = r.json()
 
     response_code = r_json["responseCode"]
@@ -135,7 +136,7 @@ def get_useragent(rnd):
     if rnd:
         try:
             f_rua = str(Path(__file__).resolve().parent) + "/user-agents.txt"
-            lines = open(f_rua).read().splitlines()
+            lines = open(f_rua, encoding = "utf-8").read().splitlines()
 
             return random.choice(lines)
         except FileNotFoundError:
@@ -179,7 +180,7 @@ def print_domains(ip, source, ua, output = None):
         print("[+] Found " + n + " domains:")
 
         if output is not None:
-            f_output = open(output, "a")
+            f_output = open(output, "a", encoding = "utf-8")
 
         fqdns.sort()
 
@@ -230,7 +231,7 @@ def main():
         except ipaddress.NetmaskValueError:
             error("Invalid subnet.")
     elif file is not None:
-        with open(file) as reader:
+        with open(file, encoding = "utf-8") as reader:
             for line in reader:
                 print_domains(line.strip(), source, ua, output)
 
