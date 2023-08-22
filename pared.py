@@ -166,6 +166,8 @@ def print_domains(ip, source, ua, output = None):
         rv = "- timeout -"
     except IndexError:
         rv = "- not available -"
+    except socket.herror as e:
+        rv = "- not available -"
 
     print("[+] IP:         " + colored(ip, "white", attrs = ["bold"]))
     print("[+] Rev. DNS:   " + colored(rv, "white", attrs = ["bold"]))
