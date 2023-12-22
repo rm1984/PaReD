@@ -53,14 +53,14 @@ def logo():
 
 
 def error(message):
-    print(colored("ERROR!", "red", attrs = ["reverse", "bold"]) + " " + message)
+    print(colored("ERROR!", "red", attrs=["reverse", "bold"]) + " " + message)
 
 
 # HackerTarget
 def from_hackertarget(ip, ua):
     url = "https://api.hackertarget.com/reverseiplookup/?q=" + ip
 
-    r = requests.get(url, headers = {"User-Agent": ua}, verify = False, timeout = 30)
+    r = requests.get(url, headers={"User-Agent": ua}, verify=False, timeout=30)
 
     if r.status_code != 200:
         error("Server responded with HTTP code " + str(r.status_code) + ".")
@@ -107,7 +107,9 @@ def from_mnemonic(ip, ua):
         "limit": 25,
     }
 
-    r = requests.post(url, data = json.dumps(payload), headers = headers, verify = False, timeout = 30)
+    r = requests.post(
+        url, data=json.dumps(payload), headers=headers, verify=False, timeout=30
+    )
     r_json = r.json()
 
     response_code = r_json["responseCode"]
@@ -136,7 +138,7 @@ def get_useragent(rnd):
     if rnd:
         try:
             f_rua = str(Path(__file__).resolve().parent) + "/user-agents.txt"
-            lines = open(f_rua, encoding = "utf-8").read().splitlines()
+            lines = open(f_rua, encoding="utf-8").read().splitlines()
 
             return random.choice(lines)
         except FileNotFoundError:
@@ -145,7 +147,7 @@ def get_useragent(rnd):
         return ua
 
 
-def print_domains(ip, source, ua, output = None):
+def print_domains(ip, source, ua, output=None):
     try:
         ip = str(ipaddress.ip_address(ip)).strip()
     except ValueError:
@@ -153,8 +155,8 @@ def print_domains(ip, source, ua, output = None):
         sys.exit(1)
 
     try:
-#        result = resolver.query(reversename.from_address(ip), "ptr")
-#        rv = result[0]
+        #        result = resolver.query(reversename.from_address(ip), "ptr")
+        #        rv = result[0]
         rv = socket.gethostbyaddr(ip)[0]
     except resolver.NXDOMAIN:
         rv = "- none -"
@@ -169,10 +171,10 @@ def print_domains(ip, source, ua, output = None):
     except socket.herror as e:
         rv = "- not available -"
 
-    print("[+] IP:         " + colored(ip, "white", attrs = ["bold"]))
-    print("[+] Rev. DNS:   " + colored(rv, "white", attrs = ["bold"]))
-    print("[+] Source:     " + colored(source, "yellow", attrs = ["bold"]))
-    print("[+] User Agent: " + colored(ua, "white", attrs = ["bold"]))
+    print("[+] IP:         " + colored(ip, "white", attrs=["bold"]))
+    print("[+] Rev. DNS:   " + colored(rv, "white", attrs=["bold"]))
+    print("[+] Source:     " + colored(source, "yellow", attrs=["bold"]))
+    print("[+] User Agent: " + colored(ua, "white", attrs=["bold"]))
 
     fqdns = globals()["from_" + source](ip, ua)
     count = len(fqdns)
@@ -182,7 +184,7 @@ def print_domains(ip, source, ua, output = None):
         print("[+] Found " + n + " domains:")
 
         if output is not None:
-            f_output = open(output, "a", encoding = "utf-8")
+            f_output = open(output, "a", encoding="utf-8")
 
         fqdns.sort()
 
@@ -190,27 +192,34 @@ def print_domains(ip, source, ua, output = None):
             print(colored(fqdn, "green"))
 
             if output is not None:
-                print(fqdn, file = f_output)
+                print(fqdn, file=f_output)
 
         if output is not None:
             f_output.close()
     else:
         print(
-            "[+] No domains found for IP " + colored(ip, "white", attrs = ["bold"]) + ", sorry."
+            "[+] No domains found for IP "
+            + colored(ip, "white", attrs=["bold"])
+            + ", sorry."
         )
 
     print()
 
 
 def main():
-    parser = argparse.ArgumentParser(prog = "pared.py")
-    group = parser.add_mutually_exclusive_group(required = True)
-    group.add_argument("-i", "--ip", help = "single IP address")
-    group.add_argument("-s", "--subnet", help = "subnet in CIDR notation")
-    group.add_argument("-f", "--file", help = "file containing a list of IP addresses")
-    parser.add_argument("-o", "--output", help = "save output to file")
-    parser.add_argument("-r", "--rua", action = "store_true", help = "random user agent")
-    parser.add_argument("--source", choices = ["hackertarget", "mnemonic"], default = "hackertarget", help = 'source of data ("hackertarget" is the default)')
+    parser = argparse.ArgumentParser(prog="pared.py")
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("-i", "--ip", help="single IP address")
+    group.add_argument("-s", "--subnet", help="subnet in CIDR notation")
+    group.add_argument("-f", "--file", help="file containing a list of IP addresses")
+    parser.add_argument("-o", "--output", help="save output to file")
+    parser.add_argument("-r", "--rua", action="store_true", help="random user agent")
+    parser.add_argument(
+        "--source",
+        choices=["hackertarget", "mnemonic"],
+        default="hackertarget",
+        help='source of data ("hackertarget" is the default)',
+    )
     args = parser.parse_args()
 
     ip = args.ip
@@ -233,7 +242,7 @@ def main():
         except ipaddress.NetmaskValueError:
             error("Invalid subnet.")
     elif file is not None:
-        with open(file, encoding = "utf-8") as reader:
+        with open(file, encoding="utf-8") as reader:
             for line in reader:
                 print_domains(line.strip(), source, ua, output)
 
