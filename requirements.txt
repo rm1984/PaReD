@@ -1,4 +1,4 @@
-dnspython==1.15.0
-Requests==2.31.0
-termcolor==1.1.0
-urllib3==1.26.18
+dnspython==2.7.0
+Requests==2.32.3
+termcolor==2.5.0
+urllib3==2.3.0
